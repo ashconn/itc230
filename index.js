@@ -17,7 +17,7 @@ http.createServer((req, res) => {
             break;
         default:
             res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Not found');
+            res.end('Page not found.');
             break;
     }
 }).listen(process.env.PORT || 3000);
