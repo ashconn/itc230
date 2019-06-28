@@ -1,0 +1,29 @@
+{
+  "name": "itc230",
+  "version": "1.0.0",
+  "description": "sample application for itc 230",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashconn/itc230.git"
+  },
+  "keywords": [
+    "javascript",
+    "node",
+    "mongodb"
+  ],
+  "author": "Ashley Connolley",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ashconn/itc230/issues"
+  },
+  "homepage": "https://github.com/ashconn/itc230#readme"
+}
