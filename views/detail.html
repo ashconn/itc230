@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<HTML>
+
+<head>
+    <meta charset="utf-8">
+    <title>ITC 230: Application</title>
+
+<body>
+    <h2>Details</h2>
+    <hr>
+    <p>
+        <a href="/">Home</a>
+    </p>
+    <h3>Games</h3>
+    {{#if result}}
+    <h2>{{result.title}} details</h2>
+    <li>Genre: {{result.genre}}</li>
+    <li>Release Date: {{result.year}}</li>
+    <p>
+        <a href="/delete?title={{result.title}}">Delete</a>
+    </p>
+    {{else}}
+    <h2>{{title}} was not found.</h2>
+    {{/if}}
+</body>
+
+</HTML>

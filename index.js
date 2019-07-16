@@ -1,23 +1,65 @@
-const http = require("http");
+'use strict'
 
-http.createServer((req, res) => {
-    const path = req.url.toLowerCase();
-    switch (path) {
-        case '/':
-            const fs = require("fs");
-            fs.readFile("public/home.html", (err, data) => {
-                if (err) return console.error(err);
-                res.writeHead(200, {'Content-Type': 'text/html'});
-                res.end(data.toString());
-            });
-            break;
-        case '/about':
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
-            res.end('This is my app for ITC 230.');
-            break;
-        default:
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Page not found.');
-            break;
-    }
-}).listen(process.env.PORT || 3000);
+let games = require("./games.js");
+
+const express = require("express");
+const app = express();
+const bodyParser = require("body-parser");
+
+app.set('port', process.env.PORT || 3000);
+app.use(express.static(__dirname + '/public')); // set location for static files
+app.use(bodyParser.urlencoded({extended: true})); // parse form submissions
+
+const handlebars =  require("express-handlebars");
+app.engine(".html", handlebars({extname: '.html', defaultLayout: false}));
+app.set("view engine", ".html");
+
+// send static file as response
+app.get('/', (req, res) => {
+    res.render('home', {games: games.getAll()}); 
+});
+
+// send plain text response
+app.get('/about', (req, res) => {
+    res.type('text/plain');
+    res.send('About page.');
+});
+
+// handle get
+app.get('/delete', (req, res) => {
+    let result = games.delete(req.query.title);
+    res.render('delete', {
+        title: req.query.title, result: result
+    });
+});
+
+app.get('/detail', (req, res) => {
+    console.log(req.query)
+    var found = games.get(req.query.title);
+    res.render('detail', {
+        title: req.query.title, 
+        result: found
+    });
+});
+
+// handle post
+app.post('/detail', (req, res) => {
+    console.log(req.body)
+    var found = games.get(req.body.title);
+    res.render('detail', {
+        title: req.body.title, 
+        result: found, 
+        games: games.getAll()
+    });
+});
+
+// define 404 handler
+app.use( (req,res) => {
+    res.type('text/plain'); 
+    res.status(404);
+    res.send('404 - Not found');
+});
+
+app.listen(app.get('port'), () => {
+    console.log('Express started.'); 
+});
