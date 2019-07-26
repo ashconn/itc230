@@ -4,9 +4,11 @@
   "description": "sample application for itc 230",
   "main": "index.js",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-handlebars": "^3.1.0",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.14",
+    "mongoose": "^5.6.4"
   },
   "devDependencies": {
     "chai": "^4.2.0",
