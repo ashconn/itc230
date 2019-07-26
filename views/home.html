@@ -3,7 +3,6 @@
     <head>
         <meta charset="utf-8">
         <title>ITC 230: Application</title>
-        
     <body>
         <h1>Welcome to the Application!</h1>
             
@@ -16,9 +15,11 @@
                 <button>Search</button>
             </form>
             <br>
-            <h3>Games</h3>
-{{#each games}}
-    <li><a href="/detail?title={{title}}">{{title}}</a></li>
-{{/each}}
+            {{#if games}}
+            <h3>Games List</h3>
+            {{/if}}
+            {{#each games}}
+                <li><a href="/detail?title={{title}}">{{title}}</a></li>
+            {{/each}}
     </body>
 </HTML>

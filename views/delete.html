@@ -1,16 +1,18 @@
 <!DOCTYPE HTML>
 <HTML>
+
 <head>
     <meta charset="utf-8">
     <title>ITC 230: Application</title>
 
 <body>
     <a href="/">Go Home</a>
-    {{#if result.deleted}}
+    {{#if deleted}}
     <h2>{{title}} has been deleted.</h2>
-    Remaining games: {{result.total}}
+    Remaining games: {{total}}
     {{else}}
-    <h2>{{result.title}} was not found.</h2>
+    <h2>{{title}} was not found.</h2>
     {{/if}}
 </body>
+
 </HTML>
