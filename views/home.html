@@ -1,25 +1,179 @@
 <!DOCTYPE HTML>
 <HTML>
-    <head>
-        <meta charset="utf-8">
-        <title>ITC 230: Application</title>
-    <body>
-        <h1>Welcome to the Application!</h1>
-            
-            <p>Ripple cost few FUD! Bitcoin required lots of lightning fast unspent transaction output behind a FUD, for Tether thinking a exchange after many unconfirmed! Ravencoin mining few deterministic wallet until the taint when ICO cost a moon, or Nexo stacks some lightning fast pump and dump for lots of shilling. ERC721 token standard sharded the minimum proof of work in the smart contract when Dash bought a token of many consensus process.
-            <br><br>
-            Silk Road cost some immutable consensus process, for Waves thinking few dormant crypto-jacking. Ethereum formed the mnemonic phrase during few over the counter since TRON mining few centralised smart contract at a orphan, or Bitcoin thinking the considerable dolphin. Someone detected some soft fork because Decred based on a FOMO during lots of moon! OmiseGo is some confirmation of lots of dolphin, and ERC20 token standard mining a hot accidental fork during many airdrop! Binance Coin was lots of REKT behind few bubble.</p>
-            <br>
-            <form method="POST" action="/detail">
-                <input type="text" name="title" placeholder="title" required>
-                <button>Search</button>
-            </form>
-            <br>
-            {{#if games}}
-            <h3>Games List</h3>
-            {{/if}}
-            {{#each games}}
-                <li><a href="/detail?title={{title}}">{{title}}</a></li>
-            {{/each}}
-    </body>
+
+<head>
+    <meta charset="utf-8">
+    <title>ITC 230: React Application</title>
+
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</head>
+
+<body>
+
+    <div id="root"></div> <!-- Rendered items thru React show in this div -->
+
+    <script type="text/babel">
+
+            class GameApp extends React.Component{
+                constructor(props){
+                    super(props);
+                    this.state = {
+                        items: {{{games}}},
+                        filter: "",
+                        currentItem: {}
+            }
+        
+            this.onSearchChange = this.onSearchChange.bind(this);
+            this.onChange = this.onChange.bind(this);
+            this.onSave = this.onSave.bind(this);
+            this.onDelete = this.onDelete.bind(this);
+            this.onClear = this.onClear.bind(this);
+
+        }
+
+// handle changes to search form
+onSearchChange(event) {
+        // set search term. react will handle component updates 
+        this.setState({filter: event.target.value.toLowerCase() });
+      }
+      // show item details when list item clicked
+      showDetails(event){
+        // event.target is item clicked. Assumes each item has an id attribute
+        let editItem = this.state.items.find((item) => {
+          return item._id == event.target.id;
+        });
+        this.setState({currentItem: editItem});
+      }
+      // clear details form
+      onClear() {
+        this.setState({currentItem: {}});
+      }
+      // handle detail changes
+      onChange(event) {
+        var newItem = this.state.currentItem;
+        newItem[event.target.name] = event.target.value
+        this.setState({currentItem: newItem});
+      }
+      // Handle item save
+      onSave() {
+        let newItem = this.state.currentItem;
+        if (!newItem.title) {
+          return;
+        }
+        fetch("/api/add/", {
+          method: "POST",
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newItem)
+        }).then(res => res.json())
+        	.then((json) => {
+          let newData;
+          if (!newItem._id) { // add new item to array
+            newData = this.state.items;
+            newItem._id = json._id;
+            newData.push(newItem);
+          } else { // update existing item 
+            newData = this.state.items.map((item) => {
+              if (item._id === newItem._id) {
+                item = newItem; 
+              }
+              return item;
+            });          
+          }
+  
+          // Update state with new array
+          this.setState({items: newData});
+        });
+      }
+      
+      // Handle item delete
+      onDelete(){
+        let id = this.state.currentItem._id;
+        
+        fetch("/api/delete/" + id).then((response) => {
+          return response.json();
+        }).then((results) => {
+          // Filter all items except the one to be removed
+          const remainder = this.state.items.filter((item) => {
+            return item._id !== id;
+          });
+          // Update state with new array
+          this.setState({items: remainder, currentItem: {}});
+        });
+      }
+    
+      render() {
+        // render app elements
+        return (
+          <div>
+          <Title title="Game Management" />
+          <SearchForm filter={this.state.filter} change={this.onSearchChange} />
+          <div>
+            <ItemList
+                items={this.state.items} 
+                filter={this.state.filter}
+                show={this.showDetails.bind(this)}
+            />
+            <ItemDetails item={this.state.currentItem} change={this.onChange} save={this.onSave} reset={this.onClear} delete={this.onDelete} />
+            </div>
+          </div>
+          );
+      }
+    }
+
+            //UI
+
+             const Title = ({title}) => {
+                 return (
+                     <div><h1>{title}</h1></div>
+                 );
+             };
+
+             const SearchForm = (props) => {
+                 return (
+                     <div>
+                        <input type="text" placeholder="Search..." value={props.filter} onChange={props.change} />
+                        <p />
+                    </div>
+                 );
+             };
+
+             //shows all items in list or specific search entry matches
+             const ItemList = ({items, filter, show}) => {
+                const itemNodes = items.map((item) => {
+                    if (!filter || item.title.toLowerCase().includes(filter)) {
+                        return <li id={item._id} key={item._id} onClick={show}>{item.title}</li>
+                    };
+                });
+                return <span><ul>{itemNodes}</ul></span>;
+             };
+
+             const ItemDetails = (props) => {
+                 return (
+                     <span>
+                        <h3>Details Page:</h3>
+                        <form onChange={props.change}>
+                            <label>Title:<br />
+                                <input type="text" name="title" onChange={props.change} placeholder="title" value={props.item.title || ""} />
+                            </label><p />
+                            <label>Genre:<br />
+                                <input type="text" name="genre" onChange={props.change} placeholder="genre" value={props.item.genre || ""} />
+                            </label><p />
+                            <label>Release Year:<br />
+                                <input type="text" name="year" onChange={props.change} placeholder="year" value={props.item.year || ""} /><p />
+                            </label>
+                        </form>
+                        <button onClick={props.save}>Save</button> 
+                        <button onClick={props.reset}>Clear</button> 
+                        <button onClick={props.delete}>Delete</button>
+                    </span>
+                 );
+             };
+
+             ReactDOM.render(<GameApp />, document.getElementById('root'));
+
+        </script>
+</body>
+
 </HTML>
