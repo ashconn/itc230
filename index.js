@@ -1,125 +1,97 @@
 'use strict'
 
-const games = require("./games");
-const Game = require("./models/games");
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
+const Game = require("./models/games");
 
-//Express settings
+// Express configs
 app.set('port', process.env.PORT || 3000);
 app.use(express.static(__dirname + '/public')); // set location for static files
-app.use(bodyParser.urlencoded({extended: true})); // parse form submissions
+app.use(require('body-parser').urlencoded({extended: true})); // parse form submissions
+app.use(bodyParser.json());
 app.use('/api', require("cors")());
 app.use((err, req, res, next) => {
     console.log(err);
 });
 
-//Handlebars settings
-const handlebars =  require("express-handlebars");
+// Handlebars configs
+const handlebars = require("express-handlebars");
 app.engine(".html", handlebars({extname: '.html', defaultLayout: false}));
 app.set("view engine", ".html");
 
-// send static file as response
-app.get('/', (req, res) => {
-    games.getAll().then((games) => {
-        res.render('home', {games: games});
-    }).catch((err) => {
-        return next(err);
+// Routes
+// Home page static file
+app.get('/', (req, res, next) => {
+    Game.find((err, games) => {
+        if (err) return next(err);
+        res.render('home', { games: JSON.stringify(games) });
     });
 });
 
-// send plain text response
+// About page
 app.get('/about', (req, res) => {
-    res.type('text/plain');
-    res.send('About page.');
-});
-
-// handle get methods
-
-app.get('/delete', (req, res) => {
-    Game.remove({title: req.query.title}, (err, result) => {
-        if (err) return next(err);
-        const deleted = result.result !==0;
-    Game.count((err, total) => {
-        res.type('text/html');
-        res.render('delete', {title: req.query.title, deleted: result.result !==0, total: total });
-        });
-    });
-});
-
-app.get('/detail', (req, res, next) => {
-    Game.findOne({title: req.query.title}, (err, games) => {
-        if (err) return next(err);
-        res.type('text/html');
-        res.render('detail', {result: games});
-    });
-});
-
-// handle post
-app.post('/detail', (req, res, next) => {
-    Game.findOne({title: req.body.title}, (err, games) => {
-        if (err) return next(err);
-        res.type('text/html');
-        res.render('detail', {result: games});
-    });
+    res.type('text/html');
+    res.render('About page.');
 });
 
 // APIs
-app.get('/api/add/:title/:genre/:year', (req, res, next) => {
+
+// Grab single game API
+app.get('/api/game/:title', (req, res, next) => {
     const title = req.params.title;
-    Game.updateOne({title: title}, {title: title, genre: req.params.genre, year: req.params.year}, {upsert: true}, (err, result) => {
-        if (err) return next(err);
-        res.json({updated: result.n});
+    console.log(title);
+    Game.findOne({ title: title }, (err, game) => {
+        if (err || !game) return next(err);
+        res.json(game);
     });
 });
 
+// Get all games API
+app.get('/api/games/', (req, res, next) => {
+    Game.find((err, allGames) => {
+        if (err || !allGames) return next(err);
+        res.json(allGames);
+    });
+});
+
+// Delete game API
+app.get('/api/delete/:id', (req, res, next) => {
+    Game.deleteOne({ "_id": req.params.id }, (err, result) => {
+        if (err) return next(err);
+        res.json({ "deleted": "result" });
+    });
+});
+
+// Find & update existing or add new game API
 app.post('/api/add/', (req, res, next) => {
     if (!req.body._id) {
-        const game = new Game({title: req.body.title, genre: req.body.genre, year: req.body.year});
-        game.save((err, newGame) => {
+        const newGame = new Game({ "title": req.body.title, "genre": req.body.genre, "year": req.body.year });
+        newGame.save((err, savedNewGame) => {
             if (err) return next(err);
-            console.log(newGame);
-            res.json({updated: 0, _id: newGame._id});
+            console.log('New Game: ' + savedNewGame);
+            res.json({ updated: 0, _id: savedNewGame._id });
         });
     } else {
-        Game.updateOne({_id: req.body._id}, {title: req.body.title, genre: req.body.genre, year: req.body.year}, (err, result) => {
+        Game.updateOne({ _id: req.body._id }, { "title": req.body.title, "genre": req.body.genre, "year": req.body.year }, (err, result) => {
             if (err) return next(err);
-            res.json({updated: result.n});
+            res.json({ updated: result.nModified, _id: req.body._id });
         });
     };
 });
 
-app.get('api/game', (req, res, next) => {
-    Game.find((err, result) => {
-        if (err || !result) return next(err);
-        res.json(result);
-    });
-});
+//End APIs
 
-app.get('/api/game/:title', (req, res, next) => {
-    const title = req.params.title;
-    console.log(title);
-    Game.findOne({title: title}, (err, result) => {
-        if (err || !result) return next(err);
-        res.json(result);
-    });
-});
-
-app.get('/api/delete/:title', (req, res, next) => {
-    Game.remove({"title": req.params.title}, (err, result) => {
-        if (err) return next(err);
-        res.json({"deleted": result.result});
-    });
-});
-
-// define 404 handler
-app.use( (req,res) => {
-    res.type('text/plain'); 
+// Define 404 handler
+app.use((req, res) => {
+    res.type('text/plain');
     res.status(404);
     res.send('404 - Not found');
 });
 
+// End routes
+
+// Launch server
 app.listen(app.get('port'), () => {
-    console.log('Express started.'); 
+    console.log('Express started.');
 });
